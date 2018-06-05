@@ -38,8 +38,13 @@ public class NewsDetailAdapter extends BaseMultiItemQuickAdapter<NewsDetail.Item
             case NewsDetail.ItemBean.TYPE_DOC_TITLEIMG:
                 baseViewHolder.setText(R.id.tv_title, bean.getTitle());
                 baseViewHolder.setText(R.id.tv_source, bean.getSource());
-                baseViewHolder.setText(R.id.tv_commnetsize,
-                        String.format(mContext.getResources().getString(R.string.news_commentsize), bean.getCommentsall()));
+                if (bean.getCommentsall() != null) {
+                    baseViewHolder.setText(R.id.tv_commnetsize,
+                            String.format(mContext.getResources().getString(R.string.news_commentsize), bean.getCommentsall()));
+                } else {
+                    baseViewHolder.setText(R.id.tv_commnetsize, "");
+                }
+
                 ImageLoaderUtil.LoadImage(mContext, bean.getThumbnail(), (ImageView) baseViewHolder.getView(R.id.iv_logo));
                 baseViewHolder.addOnClickListener(R.id.iv_close);
                 break;

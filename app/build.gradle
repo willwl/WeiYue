@@ -72,6 +72,8 @@ dependencies {
 
     compile rootProject.ext.dependencies["litepal"]
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile 'cn.leancloud.android:avoscloud-sdk:v4.6.4'
+    compile 'org.jsoup:jsoup:1.11.3'
     testCompile 'junit:junit:4.12'
 }
 repositories {

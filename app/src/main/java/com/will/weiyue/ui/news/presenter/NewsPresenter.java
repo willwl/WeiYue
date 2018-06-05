@@ -42,13 +42,14 @@ public class NewsPresenter extends BasePresenter<NewsContract.View> implements N
                     .getStringArray(R.array.news_channel_id));
             List<Channel> channels = new ArrayList<>();
 
+            int other = 0;
             for (int i = 0; i < channelName.size(); i++) {
                 Channel channel = new Channel();
                 channel.setChannelId(channelId.get(i));
                 channel.setChannelName(channelName.get(i));
                 channel.setChannelType(i < 1 ? 1 : 0);
-                channel.setChannelSelect(i < channelId.size() - 3);
-                if (i < channelId.size() - 3) {
+                channel.setChannelSelect(i < channelId.size() - other);
+                if (i < channelId.size() - other) {
                     myChannels.add(channel);
                 } else {
                     otherChannels.add(channel);

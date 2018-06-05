@@ -27,7 +27,7 @@ public class DateUtil {
      */
     public static Date string2Date(String str, String format) {
         try {
-            return new SimpleDateFormat(format).parse(str);
+            return new SimpleDateFormat(format, Locale.US).parse(str);
         } catch (ParseException e) {
             e.printStackTrace();
         }

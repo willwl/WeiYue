@@ -1,6 +1,7 @@
 package com.will.weiyue;
 
 
+import com.avos.avoscloud.AVOSCloud;
 import com.will.weiyue.component.ApplicationComponent;
 import com.will.weiyue.component.DaggerApplicationComponent;
 import com.will.weiyue.module.ApplicationModule;
@@ -31,6 +32,12 @@ public class MyApp extends LitePalApplication {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // 初始化参数依次为 this, AppId, AppKey
+        AVOSCloud.initialize(this,"DExyy3gNUbwd5kFEnPw4gMdN-gzGzoHsz","KmGhrLY408fWyfbL67WTltxb");
+        // 放在 SDK 初始化语句 AVOSCloud.initialize() 后面，只需要调用一次即可
+        AVOSCloud.setDebugLogEnabled(true);
+
         sMyApp = this;
         BGASwipeBackManager.getInstance().init(this);
         mApplicationComponent = DaggerApplicationComponent.builder()

@@ -28,6 +28,15 @@ import com.will.weiyue.ui.news.presenter.ArticleReadPresenter;
 import com.will.weiyue.utils.DateUtil;
 import com.will.weiyue.widget.ObservableScrollView;
 
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import butterknife.BindView;
 import butterknife.OnClick;
 
@@ -64,6 +73,8 @@ public class ArticleReadActivity extends BaseActivity<ArticleReadPresenter> impl
     TextView mTvTopName;
     @BindView(R.id.tv_TopUpdateTime)
     TextView mTvTopUpdateTime;
+
+    private Boolean loaded = false;
 
     @Override
     public int getContentLayout() {
@@ -119,8 +130,12 @@ public class ArticleReadActivity extends BaseActivity<ArticleReadPresenter> impl
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                String aid = getIntent().getStringExtra("aid");
-                mPresenter.getData(aid);
+                if (loaded) {
+                    return;
+                }
+
+                loaded = true;
+                onRetry();
             }
         });
     }
@@ -132,7 +147,29 @@ public class ArticleReadActivity extends BaseActivity<ArticleReadPresenter> impl
     @Override
     public void onRetry() {
         String aid = getIntent().getStringExtra("aid");
-        mPresenter.getData(aid);
+        if (aid != null) {
+            mPresenter.getData(aid);
+        } else {
+            NewsArticleBean articleBean = new NewsArticleBean();
+            NewsArticleBean.BodyBean bodyBean = new NewsArticleBean.BodyBean();
+            bodyBean.setTitle(getIntent().getStringExtra("title"));
+            bodyBean.setUpdateTime(getIntent().getStringExtra("updateTime"));
+            bodyBean.setSource(getIntent().getStringExtra("source"));
+            bodyBean.setAuthor(getIntent().getStringExtra("author"));
+            bodyBean.setWwwurl(getIntent().getStringExtra("url"));
+            articleBean.setBody(bodyBean);
+            loadData(articleBean);
+        }
+    }
+
+    private static String getContent(String regex,String text) {
+        String content = "";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(text);
+        while(matcher.find()) {
+            content = matcher.group(1).toString();
+        }
+        return content;
     }
 
     @Override
@@ -160,17 +197,63 @@ public class ArticleReadActivity extends BaseActivity<ArticleReadPresenter> impl
             mTvName.setText(articleBean.getBody().getSource());
             mTvTopUpdateTime.setText(!TextUtils.isEmpty(articleBean.getBody().getAuthor()) ? articleBean.getBody().getAuthor() : articleBean.getBody().getEditorcode());
         }
-        mWebView.post(new Runnable() {
-            @Override
-            public void run() {
-                final String content = articleBean.getBody().getText();
-                String url = "javascript:show_content(\'" + content + "\')";
-                mWebView.loadUrl(url);
-                showSuccess();
-            }
-        });
-    }
 
+        String aid = getIntent().getStringExtra("aid");
+        if (aid != null) {
+            mWebView.post(new Runnable() {
+                @Override
+                public void run() {
+                    final String content = articleBean.getBody().getText();
+                    String url = "javascript:show_content(\'" + content + "\')";
+                    mWebView.loadUrl(url);
+                    showSuccess();
+                }
+            });
+        } else {
+            Thread thread = new Thread(new Runnable(){
+                @Override
+                public void run() {
+                    Connection.Response response;
+                    try {
+                        String wwwurl = articleBean.getBody().getWwwurl();
+                        Document doc = Jsoup.connect(wwwurl).userAgent("Mozilla").timeout(3000).get();
+                        String content = "";
+                        wwwurl = wwwurl.toLowerCase();
+                        if (wwwurl.contains(".qq.com"))  {
+                            //新闻正文正则
+                            Element element = doc.getElementById("Cnt-Main-Article-QQ");
+                            content = element.outerHtml();
+                        } else if (wwwurl.contains(".geekpark.net")) {
+                            // Element element = doc.getElementsByTag("article").first();
+                            Element element = doc.getElementById("article-body");
+                            content = element.outerHtml();
+                        } else if (wwwurl.contains(".techweb.com.cn")) {
+                            Element element = doc.getElementById("content");
+                            content = element.outerHtml();
+                        } else {
+                            content = doc.body().outerHtml();
+                        }
+
+                        getIntent().putExtra("content", content);
+                        mWebView.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                String content = getIntent().getStringExtra("content");
+                                String url = "javascript:show_content(\'" + content + "\')";
+                                mWebView.loadUrl(url);
+                                showSuccess();
+                            }
+                        });
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+            thread.start();
+        }
+    }
 
     private void addjs(final WebView webview) {
 

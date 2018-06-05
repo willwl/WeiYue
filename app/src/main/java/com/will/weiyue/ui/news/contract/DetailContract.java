@@ -41,7 +41,6 @@ public interface DetailContract {
          * @param itemBeanList
          */
         void loadMoreData(List<NewsDetail.ItemBean> itemBeanList);
-
     }
 
     interface Presenter extends BaseContract.BasePresenter<View> {
